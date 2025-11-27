@@ -556,6 +556,169 @@ body {
     background: var(--primary-gradient);
 }
 
+/* Voice Controls (Pitch & Speed) */
+.voice-controls {
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.voice-control-group {
+    margin-bottom: var(--spacing-sm);
+}
+
+.voice-control-group:last-child {
+    margin-bottom: 0;
+}
+
+.voice-control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.voice-control-name {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.voice-control-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    min-width: 35px;
+    text-align: right;
+}
+
+.voice-control-slider {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.voice-control-slider:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.voice-control-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    transition: all var(--transition-fast);
+}
+
+.voice-control-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.6);
+}
+
+.voice-control-slider::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+}
+
+/* Firefox */
+.voice-control-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    transition: all var(--transition-fast);
+}
+
+.voice-control-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.6);
+}
+
+.voice-control-slider::-moz-range-thumb:active {
+    transform: scale(1.1);
+}
+
+/* Male section slider colors */
+.male-section .voice-control-slider::-webkit-slider-thumb {
+    background: var(--male-gradient);
+    box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
+}
+
+.male-section .voice-control-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 2px 12px rgba(79, 172, 254, 0.6);
+}
+
+.male-section .voice-control-slider::-moz-range-thumb {
+    background: var(--male-gradient);
+    box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
+}
+
+.male-section .voice-control-slider::-moz-range-thumb:hover {
+    box-shadow: 0 2px 12px rgba(79, 172, 254, 0.6);
+}
+
+/* Female section slider colors */
+.female-section .voice-control-slider::-webkit-slider-thumb {
+    background: var(--female-gradient);
+    box-shadow: 0 2px 8px rgba(250, 112, 154, 0.4);
+}
+
+.female-section .voice-control-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 2px 12px rgba(250, 112, 154, 0.6);
+}
+
+.female-section .voice-control-slider::-moz-range-thumb {
+    background: var(--female-gradient);
+    box-shadow: 0 2px 8px rgba(250, 112, 154, 0.4);
+}
+
+.female-section .voice-control-slider::-moz-range-thumb:hover {
+    box-shadow: 0 2px 12px rgba(250, 112, 154, 0.6);
+}
+
+/* Reset button */
+.voice-control-reset {
+    margin-top: var(--spacing-sm);
+    width: 100%;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.voice-control-reset:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+.voice-control-reset:active {
+    transform: scale(0.98);
+}
+
 
 /* Waveform Animation */
 .waveform {

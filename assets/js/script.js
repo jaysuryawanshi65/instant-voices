@@ -204,6 +204,24 @@ function createVoiceCard(dialogue, gender) {
             `).join('')}
         </div>
         
+        <div class="voice-controls">
+            <div class="voice-control-group">
+                <div class="voice-control-label">
+                    <span class="voice-control-name">🎵 Pitch</span>
+                    <span class="voice-control-value" data-control="pitch">1.0x</span>
+                </div>
+                <input type="range" class="voice-control-slider" data-control="pitch" min="0.5" max="2.0" step="0.1" value="1.0">
+            </div>
+            <div class="voice-control-group">
+                <div class="voice-control-label">
+                    <span class="voice-control-name">⚡ Speed</span>
+                    <span class="voice-control-value" data-control="speed">1.0x</span>
+                </div>
+                <input type="range" class="voice-control-slider" data-control="speed" min="0.5" max="2.0" step="0.1" value="1.0">
+            </div>
+            <button class="voice-control-reset">Reset to Default</button>
+        </div>
+        
         <div class="waveform">
             <div class="waveform-bar"></div>
             <div class="waveform-bar"></div>
@@ -213,9 +231,59 @@ function createVoiceCard(dialogue, gender) {
         </div>
     `;
     
-    // Set default voice type
+    // Set default voice type and custom controls
     card.dataset.voiceType = 'normal';
     card.setAttribute('data-voice-type', 'normal');
+    card.dataset.customPitch = '1.0';
+    card.dataset.customSpeed = '1.0';
+    
+    // Add voice control slider listeners
+    const pitchSlider = card.querySelector('.voice-control-slider[data-control="pitch"]');
+    const speedSlider = card.querySelector('.voice-control-slider[data-control="speed"]');
+    const pitchValue = card.querySelector('.voice-control-value[data-control="pitch"]');
+    const speedValue = card.querySelector('.voice-control-value[data-control="speed"]');
+    const resetButton = card.querySelector('.voice-control-reset');
+    
+    // Function to update pitch value
+    const updatePitch = (value) => {
+        card.dataset.customPitch = value.toString();
+        pitchValue.textContent = `${value.toFixed(1)}x`;
+        console.log(`🎵 Pitch updated to ${value.toFixed(1)}x for card #${dialogue.id}`);
+    };
+    
+    // Function to update speed value
+    const updateSpeed = (value) => {
+        card.dataset.customSpeed = value.toString();
+        speedValue.textContent = `${value.toFixed(1)}x`;
+        console.log(`⚡ Speed updated to ${value.toFixed(1)}x for card #${dialogue.id}`);
+    };
+    
+    // Listen to both 'input' (real-time) and 'change' (after release) events
+    pitchSlider.addEventListener('input', (e) => {
+        updatePitch(parseFloat(e.target.value));
+    });
+    
+    pitchSlider.addEventListener('change', (e) => {
+        updatePitch(parseFloat(e.target.value));
+    });
+    
+    speedSlider.addEventListener('input', (e) => {
+        updateSpeed(parseFloat(e.target.value));
+    });
+    
+    speedSlider.addEventListener('change', (e) => {
+        updateSpeed(parseFloat(e.target.value));
+    });
+    
+    resetButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pitchSlider.value = '1.0';
+        speedSlider.value = '1.0';
+        updatePitch(1.0);
+        updateSpeed(1.0);
+        console.log(`🔄 Reset controls to default for card #${dialogue.id}`);
+    });
+
     
     // Add voice type selector listeners
     const voiceTypeButtons = card.querySelectorAll('.voice-type-btn');
@@ -657,16 +725,24 @@ function playVoice(text, gender, card, voiceType = 'normal') {
     // Get voice type settings
     const typeSettings = voiceTypes[voiceType] || voiceTypes.normal;
     
+    // Get custom pitch and speed from sliders (if set)
+    const customPitch = parseFloat(card.dataset.customPitch) || 1.0;
+    const customSpeed = parseFloat(card.dataset.customSpeed) || 1.0;
+    
+    console.log(`📊 Custom Controls - Pitch: ${customPitch.toFixed(1)}x, Speed: ${customSpeed.toFixed(1)}x`);
+    
     // Set voice properties based on type and gender - EXTREME but browser-compliant
     // Browser limits: rate (0.1-10), pitch (0-2), volume (0-1)
     utterance.lang = 'en-IN';
     
-    // Apply rate (clamped to browser limits)
-    utterance.rate = Math.max(0.1, Math.min(10, typeSettings.rate));
+    // Apply rate (use custom speed if not default, otherwise use type setting)
+    const baseRate = customSpeed !== 1.0 ? customSpeed : typeSettings.rate;
+    utterance.rate = Math.max(0.1, Math.min(10, baseRate));
     
-    // Apply pitch with gender modifier (clamped to browser limits)
+    // Apply pitch with gender modifier (use custom pitch if not default, otherwise use type setting)
     const genderPitchModifier = gender === 'female' ? 1.2 : 0.85;
-    utterance.pitch = Math.max(0, Math.min(2, typeSettings.pitch * genderPitchModifier));
+    const basePitch = customPitch !== 1.0 ? customPitch : typeSettings.pitch;
+    utterance.pitch = Math.max(0, Math.min(2, basePitch * genderPitchModifier));
     
     utterance.volume = typeSettings.volume;
     
@@ -677,6 +753,8 @@ function playVoice(text, gender, card, voiceType = 'normal') {
 ╠════════════════════════════════════════════════════════════╣
 ║ Voice Type: ${voiceType.toUpperCase()} ${typeSettings.icon}
 ║ Gender: ${gender === 'male' ? '👨 Male' : '👩 Female'}
+║ Custom Pitch: ${customPitch.toFixed(1)}x → Final: ${utterance.pitch.toFixed(2)}
+║ Custom Speed: ${customSpeed.toFixed(1)}x → Final: ${utterance.rate.toFixed(2)}
 ║ Rate: ${utterance.rate.toFixed(2)} (${utterance.rate < 0.8 ? 'SLOW' : utterance.rate > 1.2 ? 'FAST' : 'NORMAL'})
 ║ Pitch: ${utterance.pitch.toFixed(2)} (${utterance.pitch < 0.8 ? 'LOW' : utterance.pitch > 1.2 ? 'HIGH' : 'NORMAL'})
 ║ Volume: ${utterance.volume.toFixed(2)}
