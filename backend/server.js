@@ -21,6 +21,15 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/instant-v
 const voiceRoutes = require('./routes/voices');
 app.use('/api/voices', voiceRoutes);
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Basic Auth Route (Guest)
 app.post('/api/auth/guest', (req, res) => {
   // Generate a random user ID
