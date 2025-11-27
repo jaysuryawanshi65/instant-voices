@@ -50,28 +50,28 @@ router.post('/', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'UserId is required' });
     }
 
-    let downloadURL = '';
-    let filePath = '';
+    let audioData = '';
 
     if (req.file) {
-      // Construct URL
-      const protocol = req.protocol;
-      const host = req.get('host');
-      downloadURL = `${protocol}://${host}/uploads/${req.file.filename}`;
-      filePath = req.file.path;
+      // Read file and convert to base64 for MongoDB storage
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const base64Audio = fileBuffer.toString('base64');
+      audioData = `data:${req.file.mimetype};base64,${base64Audio}`;
+      
+      // Delete the temporary file since we're storing in DB
+      fs.unlinkSync(req.file.path);
     }
 
-    // Check if voice exists
-    let voice = await Voice.findOne({ userId, id });
+    // Check if voice exists (search by id only since voices are global)
+    let voice = await Voice.findOne({ id });
 
     if (voice) {
-      // Update
+      // Update existing voice
       voice.text = text;
       voice.translation = translation;
+      voice.userId = userId;
       if (req.file) {
-        // Delete old file if exists? Maybe later.
-        voice.downloadURL = downloadURL;
-        voice.filePath = filePath;
+        voice.downloadURL = audioData;
         voice.type = type;
         voice.name = name;
         voice.size = size;
@@ -79,17 +79,17 @@ router.post('/', upload.single('file'), async (req, res) => {
       }
       voice.updatedAt = Date.now();
     } else {
-      // Create
+      // Create new voice
       voice = new Voice({
         userId,
         id,
         text,
         translation,
         isCustom: isCustom === 'true' || isCustom === true,
-        downloadURL,
-        filePath,
-        type,
+        downloadURL: audioData,
+        filePath: '',
         name,
+        type,
         size,
         lastModified
       });
@@ -103,26 +103,18 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
-// Delete a voice
+// Delete a voice (global - anyone can delete)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.query;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'UserId is required' });
-    }
-
-    const voice = await Voice.findOneAndDelete({ userId, id });
+    const voice = await Voice.findOneAndDelete({ id });
 
     if (!voice) {
       return res.status(404).json({ error: 'Voice not found' });
     }
 
-    // Delete file
-    if (voice.filePath && fs.existsSync(voice.filePath)) {
-      fs.unlinkSync(voice.filePath);
-    }
+    // No file deletion needed since we store in MongoDB as base64
 
     res.json({ message: 'Voice deleted successfully' });
   } catch (error) {
