@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd instant-voices-react && npm install && npm run build",
+  "outputDirectory": "instant-voices-react/dist",
+  "installCommand": "npm install --prefix instant-voices-react",
+  "framework": null
+}
