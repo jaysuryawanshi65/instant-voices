@@ -22,15 +22,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Get all voices for a user
+// Get all voices (global - visible to everyone)
 router.get('/', async (req, res) => {
   try {
-    const userId = req.query.userId;
-    if (!userId) {
-      return res.status(400).json({ error: 'UserId is required' });
-    }
-
-    const voices = await Voice.find({ userId });
+    // Fetch ALL voices regardless of userId to make them global
+    const voices = await Voice.find({});
     
     // Convert array to object keyed by id (to match Firebase structure expected by frontend)
     const voicesMap = {};
