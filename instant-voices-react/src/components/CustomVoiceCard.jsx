@@ -1,46 +1,88 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Upload, Trash2 } from 'lucide-react';
+import VoiceControls from './VoiceControls';
 
 const CustomVoiceCard = ({ dialogue, customVoice, onSave, onDelete }) => {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [pitch, setPitch] = useState(1.0);
+    const [speed, setSpeed] = useState(1.0);
     const audioRef = useRef(null);
     const fileInputRef = useRef(null);
 
+    // Reset controls when voice changes
     useEffect(() => {
-        // Cleanup audio on unmount
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current = null;
-            }
+        setPitch(1.0);
+        setSpeed(1.0);
+        setIsPlaying(false);
+    }, [customVoice]);
+
+    // Apply audio settings whenever pitch, speed, or isPlaying changes
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const applySettings = () => {
+            // Logic:
+            // If Pitch != 1.0, we want to change pitch.
+            // Browsers only allow changing pitch by changing playbackRate with preservesPitch = false.
+            // This also changes speed.
+            // So:
+            // - Pitch 1.0, Speed 1.0 -> Rate 1.0, PreservesPitch True
+            // - Pitch 1.0, Speed 1.5 -> Rate 1.5, PreservesPitch True (Time stretch)
+            // - Pitch 1.5, Speed 1.0 -> Rate 1.5, PreservesPitch False (Chipmunk)
+            // - Pitch 1.5, Speed 1.5 -> Rate 2.25, PreservesPitch False (Fast Chipmunk)
+            
+            const preservesPitch = pitch === 1.0;
+            
+            // Set preservesPitch properties for cross-browser support
+            if ('preservesPitch' in audio) audio.preservesPitch = preservesPitch;
+            if ('mozPreservesPitch' in audio) audio.mozPreservesPitch = preservesPitch;
+            if ('webkitPreservesPitch' in audio) audio.webkitPreservesPitch = preservesPitch;
+
+            // Calculate rate
+            audio.playbackRate = pitch * speed;
         };
-    }, []);
+
+        applySettings();
+        
+        // Re-apply on play to ensure browser picks it up
+        audio.addEventListener('play', applySettings);
+        return () => {
+            audio.removeEventListener('play', applySettings);
+        };
+    }, [pitch, speed]);
+
+    const handleReset = () => {
+        setPitch(1.0);
+        setSpeed(1.0);
+    };
 
     const handlePlay = (e) => {
         e.stopPropagation();
+        const audio = audioRef.current;
         
-        if (isPlaying) {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                setIsPlaying(false);
-            }
-            return;
-        }
+        if (!audio) return;
 
-        const audioSrc = customVoice?.downloadURL || customVoice?.data;
-        
-        if (audioSrc) {
-            // Stop any other audio (simplified for React component isolation, ideally managed by context)
-            const audio = new Audio(audioSrc);
-            audioRef.current = audio;
-            
-            audio.onended = () => {
-                setIsPlaying(false);
-            };
-            
-            audio.play().catch(e => console.error("Playback error", e));
-            setIsPlaying(true);
+        if (isPlaying) {
+            audio.pause();
+            setIsPlaying(false);
+        } else {
+            const audioSrc = customVoice?.downloadURL || customVoice?.data;
+            if (audioSrc) {
+                // Only set src if it's different to avoid reloading
+                if (audio.src !== audioSrc) {
+                    audio.src = audioSrc;
+                }
+                
+                audio.play()
+                    .then(() => setIsPlaying(true))
+                    .catch(e => console.error("Playback error", e));
+            }
         }
+    };
+
+    const handleEnded = () => {
+        setIsPlaying(false);
     };
 
     const handleUploadClick = (e) => {
@@ -116,12 +158,34 @@ const CustomVoiceCard = ({ dialogue, customVoice, onSave, onDelete }) => {
                     </button>
                 )}
             </div>
+
+            {customVoice && (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <VoiceControls 
+                        pitch={pitch} 
+                        setPitch={setPitch} 
+                        speed={speed} 
+                        setSpeed={setSpeed} 
+                        onReset={handleReset} 
+                    />
+                </div>
+            )}
             
             <div className="waveform" style={{ opacity: isPlaying ? 1 : 0 }}>
                 {[...Array(5)].map((_, i) => (
                     <div key={i} className="waveform-bar" style={{ animationDelay: `${i * 0.1}s` }}></div>
                 ))}
             </div>
+
+            <audio 
+                ref={audioRef} 
+                onEnded={handleEnded}
+                onError={(e) => {
+                    console.error("Audio error", e);
+                    setIsPlaying(false);
+                }}
+                style={{ display: 'none' }}
+            />
         </div>
     );
 };
